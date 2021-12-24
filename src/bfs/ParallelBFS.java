@@ -25,36 +25,37 @@ public class ParallelBFS implements BFS {
 
         List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.size(), null));
         List<AtomicBoolean> flag = Stream.generate(AtomicBoolean::new).limit(graph.size()).collect(Collectors.toList());
-        List<Integer> frontier = new ArrayList<>();
-        List<Integer> startBlock = new ArrayList<>();
-        List<Integer> nextFrontier = new ArrayList<>(Collections.nCopies(graph.get(start).size(), -1));
-        List<Integer> nextDeg = new ArrayList<>(Collections.nCopies(graph.get(start).size(), 0));
+
+        int[] frontier = new int[1];
+        int[] startBlock = new int[1];
 
         distances.set(start, new Distance(0, -1));
-        frontier.add(start);
-        startBlock.add(0);
+        frontier[0] = start;
         flag.get(start).set(true);
 
         int distance = 1;
+        int nextFrontierSize = graph.get(start).size();
 
-        while (!nextFrontier.isEmpty()) {
+        while (nextFrontierSize != 0) {
+            int[] nextFrontier = new int[nextFrontierSize];
+            int[] nextDeg = new int[nextFrontierSize];
 
-            List<Integer> finalFrontier = frontier;
-            List<Integer> finalStartBlock = startBlock;
-            List<Integer> finalNextFrontier = nextFrontier;
-            List<Integer> finalNextDeg = nextDeg;
+            parallelUtils.parallelFor(nextFrontierSize, i -> nextFrontier[i] = -1);
+
             int finalDistance = distance;
+            int[] finalFrontier = frontier;
+            int[] finalStartBlock = startBlock;
 
-            parallelUtils.parallelFor(finalFrontier.size(), currentIndex -> {
-                int current = finalFrontier.get(currentIndex);
+            parallelUtils.parallelFor(frontier.length, currentIndex -> {
+                int current = finalFrontier[currentIndex];
                 if (current != -1) {
                     for (int i = 0; i < graph.get(current).size(); i++) {
                         int next = graph.get(current).get(i);
                         if (flag.get(next).compareAndSet(false, true)) {
                             distances.set(next, new Distance(finalDistance, current));
 
-                            finalNextFrontier.set(finalStartBlock.get(currentIndex) + i, next);
-                            finalNextDeg.set(finalStartBlock.get(currentIndex) + i, graph.get(next).size());
+                            nextFrontier[finalStartBlock[currentIndex] + i] = next;
+                            nextDeg[finalStartBlock[currentIndex] + i] = graph.get(next).size();
                         }
                     }
                 }
@@ -63,10 +64,7 @@ public class ParallelBFS implements BFS {
             frontier = nextFrontier;
             startBlock = parallelUtils.parallelScan(nextDeg);
 
-            int nextFrontierSize = startBlock.get(startBlock.size() - 1);
-            nextFrontier = new ArrayList<>(Collections.nCopies(nextFrontierSize, -1));
-            nextDeg = new ArrayList<>(Collections.nCopies(nextFrontierSize, 0));
-
+            nextFrontierSize = startBlock[startBlock.length - 1];
             distance++;
         }
 
