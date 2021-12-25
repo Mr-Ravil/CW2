@@ -1,19 +1,26 @@
 package parallel.util;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 
 public class ParallelUtil {
-    private int BLOCK_SIZE = 1000;
+    private int P_FOR_BLOCK_SIZE = 1000;
+    private int P_SCAN_BLOCK_SIZE = 10000;
 
-    public ParallelUtil() {
+    public int getP_FOR_BLOCK_SIZE() {
+        return P_FOR_BLOCK_SIZE;
     }
 
-    public ParallelUtil(int BLOCK_SIZE) {
-        this.BLOCK_SIZE = BLOCK_SIZE;
+    public void setP_FOR_BLOCK_SIZE(int P_FOR_BLOCK_SIZE) {
+        this.P_FOR_BLOCK_SIZE = P_FOR_BLOCK_SIZE;
+    }
+
+    public int getP_SCAN_BLOCK_SIZE() {
+        return this.P_SCAN_BLOCK_SIZE;
+    }
+
+    public void setP_SCAN_BLOCK_SIZE(int P_SCAN_BLOCK_SIZE) {
+        this.P_SCAN_BLOCK_SIZE = P_SCAN_BLOCK_SIZE;
     }
 
     public void parallelFor(int threadCount, Consumer<Integer> lambda) {
@@ -37,7 +44,7 @@ public class ParallelUtil {
 
         @Override
         protected void compute() {
-            if (right - left < BLOCK_SIZE) {
+            if (right - left < P_FOR_BLOCK_SIZE) {
                 for (int i = left; i <= right; i++) {
                     lambda.accept(i);
                 }
@@ -57,7 +64,7 @@ public class ParallelUtil {
     }
 
     public int[] parallelScan(int[] data) {
-//        int[] sums = new int[data.length + 1];        for (int i = 0; i < data.length; i++) {            sums[i + 1] = sums[i] + data[i];        }        return sums;
+//        int[] sums = new int[data.length + 1];        for (int i = 0; i < data.length; i++) {            sums[i + 1] = sums[i] + data.txt[i];        }        return sums;
         return new ParallelScan(data).compute();
         // problem with scan
     }
@@ -69,7 +76,7 @@ public class ParallelUtil {
 
         public ParallelScan(int[] data) {
             this.data = data;
-            this.sums = new int[data.length * 2 / BLOCK_SIZE + BLOCK_SIZE];
+            this.sums = new int[data.length * 4 / P_SCAN_BLOCK_SIZE + P_SCAN_BLOCK_SIZE * 2];
             this.result = new int[data.length + 1];
         }
 
@@ -108,7 +115,7 @@ public class ParallelUtil {
 
             @Override
             protected void compute() {
-                if (right - left < BLOCK_SIZE) {
+                if (right - left < P_SCAN_BLOCK_SIZE) {
                     int sum = 0;
                     for (int i = left; i <= right; i++) {
                         sum += data[i];
@@ -156,7 +163,7 @@ public class ParallelUtil {
 
             @Override
             protected void compute() {
-                if (right - left < BLOCK_SIZE) {
+                if (right - left < P_SCAN_BLOCK_SIZE) {
                     result[left + 1] = sumLeft + data[left];
                     for (int i = left + 1; i <= right; i++) {
                         result[i + 1] = result[i] + data[i];

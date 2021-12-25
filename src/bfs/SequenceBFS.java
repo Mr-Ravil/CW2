@@ -1,13 +1,11 @@
 package bfs;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SequenceBFS implements BFS {
     @Override
-    public List<Distance> compute(List<List<Integer>> graph, int start) {
-        List<Distance> distances = Stream.generate(Distance::new).limit(graph.size()).collect(Collectors.toList());
+    public List<Distance> compute(int[][] graph, int start) {
+        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.length, null));
         Queue<Distance> queue = new LinkedList<>();
 
         distances.set(start, new Distance(0, -1));
@@ -16,8 +14,8 @@ public class SequenceBFS implements BFS {
         while (!queue.isEmpty()) {
             Distance current = queue.remove();
 
-            for (int next : graph.get(current.Parent)) {
-                if (distances.get(next).Distance > current.Distance) {
+            for (int next : graph[current.Parent]) {
+                if (distances.get(next) == null) {
                     distances.set(next, current);
                     queue.add(new Distance(current.Distance + 1, next));
                 }

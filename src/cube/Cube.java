@@ -17,8 +17,8 @@ public class Cube {
         }
     }
 
-    public List<List<Integer>> generateCubeGraph(int size) {
-        List<List<Integer>> graph = new ArrayList<>(size);
+    public int[][] generateCubeGraph(int size) {
+        int[][] graph = new int[size*size*size][];
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
@@ -30,7 +30,7 @@ public class Cube {
                     tryAdd(neighbours, size, i + 1, j, k);
                     tryAdd(neighbours, size, i, j + 1, k);
                     tryAdd(neighbours, size, i, j, k + 1);
-                    graph.add(neighbours);
+                    graph[getPosition(size, i, j, k)] = neighbours.stream().mapToInt(ii -> ii).toArray();
                 }
             }
         }

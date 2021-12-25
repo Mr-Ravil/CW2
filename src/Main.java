@@ -9,9 +9,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class Main {
-    private static int BLOCK_SIZE = 1000;
-    private static final int CUBE_SIZE = 250;
-    private static int ATTEMPTS_COUNT = 5;
+    private static final int P_FOR_BLOCK_SIZE = 1000;
+    private static final int P_SCAN_BLOCK_SIZE = 5000;
+    private static final int CUBE_SIZE = 300;
+    private static final int ATTEMPTS_COUNT = 5;
 
     private static String timesToString(List<Long> times) {
         String timesString = times.stream().map(String::valueOf).collect(Collectors.joining(" ms, "));
@@ -19,7 +20,8 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        System.out.println("Block size: " + BLOCK_SIZE);
+        System.out.println("Parallel for block size: " + P_FOR_BLOCK_SIZE);
+        System.out.println("Scan block size: " + P_SCAN_BLOCK_SIZE);
         System.out.println("Cube size: " + CUBE_SIZE);
         System.out.println("Attempts count: " + ATTEMPTS_COUNT + "\n\n");
 
@@ -31,9 +33,11 @@ public class Main {
 
 
         BFS sequenceBFS = new SequenceBFS();
-        BFS parallelBFS = new ParallelBFS();
+        ParallelBFS parallelBFS = new ParallelBFS();
+        parallelBFS.setP_FOR_BLOCK_SIZE(P_FOR_BLOCK_SIZE);
+        parallelBFS.setP_SCAN_BLOCK_SIZE(P_SCAN_BLOCK_SIZE);
 
-        List<List<Integer>> cubeGraph = new Cube().generateCubeGraph(CUBE_SIZE);
+        int[][] cubeGraph = new Cube().generateCubeGraph(CUBE_SIZE);
 
         for (int i = 0; i < ATTEMPTS_COUNT; i++) {
             long seqTime = launchBFS(sequenceBFS, cubeGraph, "Sequence");
@@ -56,7 +60,7 @@ public class Main {
         System.out.println("\nParallel BFS " + ((double) aveSeqTime / (double) aveParTime) + " times faster than Sequence BFS.");
     }
 
-    private static long launchBFS(BFS bfs, List<List<Integer>> cubeGraph, String typeBFS) {
+    private static long launchBFS(BFS bfs, int[][] cubeGraph, String typeBFS) {
         long startTime;
         long endTime;
         startTime = System.nanoTime();

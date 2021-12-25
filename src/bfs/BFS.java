@@ -3,7 +3,7 @@ package bfs;
 import java.util.List;
 
 public interface BFS {
-    List<Distance> compute(List<List<Integer>> graph, int start);
+    List<Distance> compute(int[][] graph, int start);
 
     class Distance {
         public int Distance;
