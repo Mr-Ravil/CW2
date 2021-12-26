@@ -1,5 +1,6 @@
 package bfs;
 
+import simulator.graph.GraphSimulator;
 import parallel.util.ParallelUtil;
 
 import java.util.ArrayList;
@@ -28,54 +29,109 @@ public class ParallelBFS implements BFS {
         this.P_SCAN_BLOCK_SIZE = P_SCAN_BLOCK_SIZE;
     }
 
+//    public List<Long> createDegList = new ArrayList<>(); //TODO
+//    public List<Long> createStartBlockList = new ArrayList<>(); //TODO
+//    public List<Long> createNextFrontierList = new ArrayList<>(); //TODO
+//    public List<Long> doP_FORList = new ArrayList<>(); //TODO
+//    public List<Long> setFrontierList = new ArrayList<>(); //TODO
+
     @Override
-    public List<Distance> compute(int[][] graph, int start) {
+    public List<Distance> compute(GraphSimulator graph, int start) {
         ParallelUtil parallelUtils = new ParallelUtil();
         parallelUtils.setP_FOR_BLOCK_SIZE(P_FOR_BLOCK_SIZE);
         parallelUtils.setP_SCAN_BLOCK_SIZE(P_SCAN_BLOCK_SIZE);
 
-        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.length, null));
-        AtomicBoolean[] flag = new AtomicBoolean[graph.length];
-        parallelUtils.parallelFor(graph.length, i -> flag[i] = new AtomicBoolean());
+//        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.getSize(), null));
+        int[] dist = new int[graph.getSize()];
+        AtomicBoolean[] flag = new AtomicBoolean[graph.getSize()];
+        parallelUtils.parallelFor(graph.getSize(), i -> flag[i] = new AtomicBoolean());
 
         AtomicReference<int[]> frontier = new AtomicReference<>(new int[1]);
-        AtomicReference<int[]> startBlock = new AtomicReference<>(new int[1]);
 
-        distances.set(start, new Distance(0, -1));
+        dist[start] = 0;
+//        distances.set(start, new Distance(0, -1));
         frontier.get()[0] = start;
         flag[start].set(true);
 
         int distance = 1;
-        int nextFrontierSize = graph[start].length;
 
-        while (nextFrontierSize != 0) {
+
+//        long startTime; //TODO
+//        long endTime; //TODO
+//        long createDeg = 0; //TODO
+//        long createStartBlock = 0; //TODO
+//        long createNextFrontier = 0; //TODO
+//        long doP_FOR = 0; //TODO
+//        long setFrontier = 0; //TODO
+
+        while (frontier.get().length != 0) {
+//            startTime = System.nanoTime(); //TODO
+
+            // put into big p_for
+            int[] deg = new int[frontier.get().length];
+            parallelUtils.parallelFor(frontier.get().length,
+                    i -> deg[i] = frontier.get()[i] == -1 ? 0 : graph.getNeighbours(frontier.get()[i]).length);
+
+//            endTime = System.nanoTime(); //TODO
+//            createDeg += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//            startTime = System.nanoTime(); //TODO
+
+            int[] startBlock = parallelUtils.parallelScan(deg);
+
+//            endTime = System.nanoTime(); //TODO
+//            createStartBlock += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//            startTime = System.nanoTime(); //TODO
+
+            int nextFrontierSize = startBlock[startBlock.length - 1];
             int[] nextFrontier = new int[nextFrontierSize];
-            int[] nextDeg = new int[nextFrontierSize];
-            parallelUtils.parallelFor(nextFrontierSize, i -> nextFrontier[i] = -1);
+//            parallelUtils.parallelFor(nextFrontierSize, i -> nextFrontier[i] = -1);
+
+//            endTime = System.nanoTime(); //TODO
+//            createNextFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
 
             int finalDistance = distance;
+
+//            startTime = System.nanoTime(); //TODO
 
             parallelUtils.parallelFor(frontier.get().length, currentIndex -> {
                 int current = frontier.get()[currentIndex];
                 if (current != -1) {
-                    for (int i = 0; i < graph[current].length; i++) {
-                        int next = graph[current][i];
+                    int[] neighbours = graph.getNeighbours(current);
+                    for (int i = 0; i < neighbours.length; i++) {
+                        int next = neighbours[i];
                         if (flag[next].compareAndSet(false, true)) {
-                            distances.set(next, new Distance(finalDistance, current));
-
-                            nextFrontier[startBlock.get()[currentIndex] + i] = next;
-                            nextDeg[startBlock.get()[currentIndex] + i] = graph[next].length;
+//                            distances.set(next, new Distance(finalDistance, current));
+                            dist[next] = finalDistance;
+                            nextFrontier[startBlock[currentIndex] + i] = next;
+                        } else {
+                            nextFrontier[startBlock[currentIndex] + i] = -1;
                         }
+                    }
+                } else {
+                    for (int i = startBlock[currentIndex]; i < startBlock[currentIndex + 1]; i++) {
+                        nextFrontier[i] = -1;
                     }
                 }
             });
 
-            frontier.set(nextFrontier);
-            startBlock.set(parallelUtils.parallelScan(nextDeg));
+//            endTime = System.nanoTime(); //TODO
+//            doP_FOR += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//            startTime = System.nanoTime(); //TODO
 
-            nextFrontierSize = startBlock.get()[startBlock.get().length - 1];
+            frontier.set(nextFrontier);
+
+//            endTime = System.nanoTime(); //TODO
+//            setFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+
             distance++;
         }
-        return distances;
+
+//        createDegList.add(createDeg); //TODO
+//        createStartBlockList.add(createStartBlock); //TODO
+//        createNextFrontierList.add(createNextFrontier); //TODO
+//        doP_FORList.add(doP_FOR); //TODO
+//        setFrontierList.add(setFrontier); //TODO
+
+        return null;
     }
 }
