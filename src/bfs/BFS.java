@@ -5,7 +5,7 @@ import simulator.graph.GraphSimulator;
 import java.util.List;
 
 public interface BFS {
-    List<Distance> compute(GraphSimulator graph, int start);
+    int[] compute(GraphSimulator graph, int start);
 
     class Distance {
         public int Distance;

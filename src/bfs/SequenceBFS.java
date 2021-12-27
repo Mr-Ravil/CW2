@@ -6,7 +6,7 @@ import java.util.*;
 
 public class SequenceBFS implements BFS {
     @Override
-    public List<Distance> compute(GraphSimulator graph, int start) {
+    public int[] compute(GraphSimulator graph, int start) {
 //        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.getSize(), null));
         int[] dist = new int[graph.getSize()];
         Queue<Distance> queue = new LinkedList<>();
@@ -15,6 +15,7 @@ public class SequenceBFS implements BFS {
 //        used.add(start);
 
         dist[start] = 0;
+        used.set(start, true);
 //        distances.set(start, new Distance(0, -1));
         queue.add(new Distance(1, start));
 
@@ -24,7 +25,7 @@ public class SequenceBFS implements BFS {
             for (int next : graph.getNeighbours(current.Parent)) {
                 if (!used.get(next)) {
                     used.set(next, true);
-                    dist[next] = current.Distance + 1;
+                    dist[next] = current.Distance;
 //                if (distances.get(next) == null) {
 //                if (!used.contains(next)) {
 //                    used.add(next);
@@ -34,7 +35,7 @@ public class SequenceBFS implements BFS {
             }
         }
 
-        return null;
+        return dist;
     }
 
 }
