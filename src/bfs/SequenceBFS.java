@@ -6,30 +6,22 @@ import java.util.*;
 
 public class SequenceBFS implements BFS {
     @Override
-    public int[] compute(GraphSimulator graph, int start) {
-//        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.getSize(), null));
-        int[] dist = new int[graph.getSize()];
+    public int[] compute(int[][] graph, int start) {
+        int[] dist = new int[graph.length];
         Queue<Distance> queue = new LinkedList<>();
-        List<Boolean> used = new ArrayList<>(Collections.nCopies(graph.getSize(), false));
-//        Set<Integer> used = new HashSet<>();
-//        used.add(start);
+        Set<Integer> used = new HashSet<>();
+        used.add(start);
 
         dist[start] = 0;
-        used.set(start, true);
-//        distances.set(start, new Distance(0, -1));
         queue.add(new Distance(1, start));
 
         while (!queue.isEmpty()) {
             Distance current = queue.remove();
 
-            for (int next : graph.getNeighbours(current.Parent)) {
-                if (!used.get(next)) {
-                    used.set(next, true);
+            for (int next : graph[current.Parent]) {
+                if (!used.contains(next)) {
                     dist[next] = current.Distance;
-//                if (distances.get(next) == null) {
-//                if (!used.contains(next)) {
-//                    used.add(next);
-//                    distances.set(next, current);
+                    used.add(next);
                     queue.add(new Distance(current.Distance + 1, next));
                 }
             }

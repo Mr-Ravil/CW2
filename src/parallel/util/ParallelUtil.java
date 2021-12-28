@@ -24,8 +24,6 @@ public class ParallelUtil {
     }
 
     public void parallelFor(int threadCount, Consumer<Integer> lambda) {
-//        for (int i = 0; i < threadCount; i++) {            lambda.accept(i);        }
-
         ParallelForAction parallelForAction = new ParallelForAction(lambda, 0, threadCount - 1);
         parallelForAction.fork();
         parallelForAction.join();
@@ -64,9 +62,7 @@ public class ParallelUtil {
     }
 
     public int[] parallelScan(int[] data) {
-//        int[] sums = new int[data.length + 1];        for (int i = 0; i < data.length; i++) {            sums[i + 1] = sums[i] + data.txt[i];        }        return sums;
         return new ParallelScan(data).compute();
-        // problem with scan
     }
 
     private class ParallelScan {

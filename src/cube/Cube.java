@@ -57,4 +57,18 @@ public class Cube {
         return true;
     }
 
+    public boolean checkBFSResult(int[] distances, int size) {
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                for (int k = 0; k < size; k++) {
+                    int position = getPosition(size, i, j, k);
+                    if (distances[position] != i + j + k) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
 }
