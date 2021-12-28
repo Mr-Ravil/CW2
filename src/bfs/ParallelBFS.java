@@ -1,12 +1,9 @@
 package bfs;
 
+import simulator.graph.GraphSimulator;
 import parallel.util.ParallelUtil;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ParallelBFS implements BFS {
     private int P_FOR_BLOCK_SIZE = 1000;
@@ -29,53 +26,63 @@ public class ParallelBFS implements BFS {
     }
 
     @Override
-    public List<Distance> compute(int[][] graph, int start) {
+    public int[] compute(int[][] graph, int start) {
         ParallelUtil parallelUtils = new ParallelUtil();
         parallelUtils.setP_FOR_BLOCK_SIZE(P_FOR_BLOCK_SIZE);
         parallelUtils.setP_SCAN_BLOCK_SIZE(P_SCAN_BLOCK_SIZE);
 
-        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.length, null));
+        int[] dist = new int[graph.length];
         AtomicBoolean[] flag = new AtomicBoolean[graph.length];
         parallelUtils.parallelFor(graph.length, i -> flag[i] = new AtomicBoolean());
 
-        AtomicReference<int[]> frontier = new AtomicReference<>(new int[1]);
-        AtomicReference<int[]> startBlock = new AtomicReference<>(new int[1]);
+        /**
+            vertexes start from 0,
+            so to safe time (the standard variable is 0)
+            the null vertex will be indicated by 0
+            and vertex will be increased by one
+        */
+        int[] frontier = new int[1];
+        int[] deg = new int[1];
 
-        distances.set(start, new Distance(0, -1));
-        frontier.get()[0] = start;
+        dist[start] = 0;
+        frontier[0] = start + 1;
+        deg[0] = graph[start].length;
         flag[start].set(true);
 
         int distance = 1;
-        int nextFrontierSize = graph[start].length;
 
-        while (nextFrontierSize != 0) {
+        while (frontier.length != 0) {
+
+            int[] startBlock = parallelUtils.parallelScan(deg);
+
+            int nextFrontierSize = startBlock[startBlock.length - 1];
             int[] nextFrontier = new int[nextFrontierSize];
-            int[] nextDeg = new int[nextFrontierSize];
-            parallelUtils.parallelFor(nextFrontierSize, i -> nextFrontier[i] = -1);
+            deg = new int[nextFrontierSize];
 
+            int[] finalDeg = deg;
+            int[] finalFrontier = frontier;
             int finalDistance = distance;
 
-            parallelUtils.parallelFor(frontier.get().length, currentIndex -> {
-                int current = frontier.get()[currentIndex];
+            parallelUtils.parallelFor(frontier.length, currentIndex -> {
+                int current = finalFrontier[currentIndex] - 1;
                 if (current != -1) {
-                    for (int i = 0; i < graph[current].length; i++) {
-                        int next = graph[current][i];
+                    int[] neighbours = graph[current];
+                    for (int i = 0; i < neighbours.length; i++) {
+                        int next = neighbours[i];
                         if (flag[next].compareAndSet(false, true)) {
-                            distances.set(next, new Distance(finalDistance, current));
-
-                            nextFrontier[startBlock.get()[currentIndex] + i] = next;
-                            nextDeg[startBlock.get()[currentIndex] + i] = graph[next].length;
+                            dist[next] = finalDistance;
+                            nextFrontier[startBlock[currentIndex] + i] = next + 1;
+                            finalDeg[startBlock[currentIndex] + i] = graph[next].length;
                         }
                     }
                 }
             });
 
-            frontier.set(nextFrontier);
-            startBlock.set(parallelUtils.parallelScan(nextDeg));
+            frontier = nextFrontier;
 
-            nextFrontierSize = startBlock.get()[startBlock.get().length - 1];
             distance++;
         }
-        return distances;
+
+        return dist;
     }
 }

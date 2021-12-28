@@ -1,28 +1,33 @@
 package bfs;
 
+import simulator.graph.GraphSimulator;
+
 import java.util.*;
 
 public class SequenceBFS implements BFS {
     @Override
-    public List<Distance> compute(int[][] graph, int start) {
-        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.length, null));
+    public int[] compute(int[][] graph, int start) {
+        int[] dist = new int[graph.length];
         Queue<Distance> queue = new LinkedList<>();
+        Set<Integer> used = new HashSet<>();
+        used.add(start);
 
-        distances.set(start, new Distance(0, -1));
+        dist[start] = 0;
         queue.add(new Distance(1, start));
 
         while (!queue.isEmpty()) {
             Distance current = queue.remove();
 
             for (int next : graph[current.Parent]) {
-                if (distances.get(next) == null) {
-                    distances.set(next, current);
+                if (!used.contains(next)) {
+                    dist[next] = current.Distance;
+                    used.add(next);
                     queue.add(new Distance(current.Distance + 1, next));
                 }
             }
         }
 
-        return distances;
+        return dist;
     }
 
 }
