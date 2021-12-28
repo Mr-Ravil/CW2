@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class Main {
     private static final int P_FOR_BLOCK_SIZE = 20000;
     private static final int P_SCAN_BLOCK_SIZE = 50000;
-    private static final int CUBE_SIZE = 556;
+    private static final int CUBE_SIZE = 550;
     private static final int ATTEMPTS_COUNT = 5;
 
     private static String timesToString(List<Long> times) {
@@ -57,14 +57,14 @@ public class Main {
         }
 
 //        System.out.println("createDeg          (" + getAverageTime(parallelBFS.createDegList) + " ms.) " + timesToString(parallelBFS.createDegList)); //TODO
-//        System.out.println("createStartBlock   (" + getAverageTime(parallelBFS.createStartBlockList) + " ms.) " + timesToString(parallelBFS.createStartBlockList)); //TODO
+        System.out.println("createStartBlock   (" + getAverageTime(parallelBFS.createStartBlockList) + " ms.) " + timesToString(parallelBFS.createStartBlockList)); //TODO
 //        System.out.println("createNextFrontier (" + getAverageTime(parallelBFS.createNextFrontierList) + " ms.) " + timesToString(parallelBFS.createNextFrontierList)); //TODO
 //        System.out.println("copyFinalFrontier  (" + getAverageTime(parallelBFS.copyFinalFrontierList) + " ms.) " + timesToString(parallelBFS.copyFinalFrontierList)); //TODO
 //        System.out.println("setFrontier        (" + getAverageTime(parallelBFS.setFrontierList) + " ms.) " + timesToString(parallelBFS.setFrontierList)); //TODO
 //        System.out.println("createNewDeg       (" + getAverageTime(parallelBFS.createNewDegList) + " ms.) " + timesToString(parallelBFS.createNewDegList)); //TODO
-//        System.out.println("doP_FOR            (" + getAverageTime(parallelBFS.doP_FORList) + " ms.) " + timesToString(parallelBFS.doP_FORList)); //TODO
-//        System.out.println("Parallel BFS times (" + getAverageTime(parTimes) + " ms.) " + timesToString(parTimes)); //TODO
-//        System.out.println("\n\n"); //TODO
+        System.out.println("doP_FOR            (" + getAverageTime(parallelBFS.doP_FORList) + " ms.) " + timesToString(parallelBFS.doP_FORList)); //TODO
+        System.out.println("Parallel BFS times (" + getAverageTime(parTimes) + " ms.) " + timesToString(parTimes)); //TODO
+        System.out.println("\n\n"); //TODO
 
         long aveParTime = getAverageTime(parTimes);
         long aveSeqTime = getAverageTime(seqTimes);

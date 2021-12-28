@@ -1,5 +1,8 @@
 package parallel.util;
 
+import unsafe.UnsafeIntArray;
+
+import java.io.IOException;
 import java.util.concurrent.RecursiveAction;
 import java.util.function.Consumer;
 
@@ -63,24 +66,27 @@ public class ParallelUtil {
         }
     }
 
-    public int[] parallelScan(int[] data) {
-//        int[] sums = new int[data.length + 1];        for (int i = 0; i < data.length; i++) {            sums[i + 1] = sums[i] + data.txt[i];        }        return sums;
+    public UnsafeIntArray parallelScan(UnsafeIntArray data) {
+//        int[] sums = new int[data.length + 1];        for (int i = 0; i < data.length; i++) {            sums[i + 1] = sums[i] + data[i];        }        return sums;
         return new ParallelScan(data).compute();
-        // problem with scan
     }
 
     private class ParallelScan {
-        private final int[] data;
-        private final int[] sums;
-        private final int[] result; // result[0] = 0
+        private final UnsafeIntArray data;
+        private final UnsafeIntArray sums;
+        private final UnsafeIntArray result; // result[0] = 0
 
-        public ParallelScan(int[] data) {
+        public ParallelScan(UnsafeIntArray data) {
             this.data = data;
-            this.sums = new int[data.length * 4 / P_SCAN_BLOCK_SIZE + P_SCAN_BLOCK_SIZE * 2];
-            this.result = new int[data.length + 1];
+            this.sums = new UnsafeIntArray(data.size() * 4 / P_SCAN_BLOCK_SIZE + P_SCAN_BLOCK_SIZE * 2);
+            this.result = new UnsafeIntArray(data.size() + 1);
+//            parallelFor(this.sums.size(), i -> this.sums.set(i, 0));
+            parallelFor(this.result.size(), i -> this.result.set(i, 0));
+//            this.sums = new int[data.length * 4 / P_SCAN_BLOCK_SIZE + P_SCAN_BLOCK_SIZE * 2];
+//            this.result = new int[data.length + 1];
         }
 
-        public int[] compute() {
+        public UnsafeIntArray compute() {
             ParallelScanUpAction parallelScanUpAction = new ParallelScanUpAction(data);
             parallelScanUpAction.fork();
             parallelScanUpAction.join();
@@ -89,24 +95,26 @@ public class ParallelUtil {
             parallelScanDownAction.fork();
             parallelScanDownAction.join();
 
+            sums.close();
+
             return result;
         }
 
 
         private class ParallelScanUpAction extends RecursiveAction {
-            private final int[] data;
+            private final UnsafeIntArray data;
             private final int left;
             private final int right;
             private final int index;
 
-            public ParallelScanUpAction(int[] data) {
+            public ParallelScanUpAction(UnsafeIntArray data) {
                 this.data = data;
                 this.left = 0;
-                this.right = data.length - 1;
+                this.right = data.size() - 1;
                 this.index = 1;
             }
 
-            public ParallelScanUpAction(int[] data, int left, int right, int index) {
+            public ParallelScanUpAction(UnsafeIntArray data, int left, int right, int index) {
                 this.data = data;
                 this.left = left;
                 this.right = right;
@@ -118,9 +126,9 @@ public class ParallelUtil {
                 if (right - left < P_SCAN_BLOCK_SIZE) {
                     int sum = 0;
                     for (int i = left; i <= right; i++) {
-                        sum += data[i];
+                        sum += data.get(i);
                     }
-                    sums[index] = sum;
+                    sums.set(index, sum);
                     return;
                 }
 
@@ -134,26 +142,26 @@ public class ParallelUtil {
                 leftAction.join();
                 rightAction.join();
 
-                sums[index] = sums[index * 2] + sums[index * 2 + 1];
+                sums.set(index, sums.get(index * 2) + sums.get(index * 2 + 1));
             }
         }
 
         private class ParallelScanDownAction extends RecursiveAction {
-            private final int[] data;
+            private final UnsafeIntArray data;
             private final int left;
             private final int right;
             private final int index;
             private final int sumLeft;
 
-            public ParallelScanDownAction(int[] data) {
+            public ParallelScanDownAction(UnsafeIntArray data) {
                 this.data = data;
                 this.left = 0;
-                this.right = data.length - 1;
+                this.right = data.size() - 1;
                 this.index = 1;
                 this.sumLeft = 0;
             }
 
-            public ParallelScanDownAction(int[] data, int left, int right, int index, int sumLeft) {
+            public ParallelScanDownAction(UnsafeIntArray data, int left, int right, int index, int sumLeft) {
                 this.data = data;
                 this.left = left;
                 this.right = right;
@@ -164,9 +172,9 @@ public class ParallelUtil {
             @Override
             protected void compute() {
                 if (right - left < P_SCAN_BLOCK_SIZE) {
-                    result[left + 1] = sumLeft + data[left];
+                    result.set(left + 1, sumLeft + data.get(left));
                     for (int i = left + 1; i <= right; i++) {
-                        result[i + 1] = result[i] + data[i];
+                        result.set(i + 1, result.get(i) + data.get(i));
                     }
                     return;
                 }
@@ -175,7 +183,7 @@ public class ParallelUtil {
                 ParallelScanDownAction leftAction = new ParallelScanDownAction(data, left, m,
                         index * 2, sumLeft);
                 ParallelScanDownAction rightAction = new ParallelScanDownAction(data, m + 1, right,
-                        index * 2 + 1, sumLeft + sums[index * 2]);
+                        index * 2 + 1, sumLeft + sums.get(index * 2));
 
                 leftAction.fork();
                 rightAction.fork();

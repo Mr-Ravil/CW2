@@ -2,6 +2,7 @@ package bfs;
 
 import simulator.graph.GraphSimulator;
 import parallel.util.ParallelUtil;
+import unsafe.UnsafeIntArray;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,34 +31,36 @@ public class ParallelBFS implements BFS {
         this.P_SCAN_BLOCK_SIZE = P_SCAN_BLOCK_SIZE;
     }
 
-//    public List<Long> createDegList = new ArrayList<>(); //TODO
-//    public List<Long> createStartBlockList = new ArrayList<>(); //TODO
-//    public List<Long> createNextFrontierList = new ArrayList<>(); //TODO
-//    public List<Long> copyFinalFrontierList = new ArrayList<>(); //TODO
-//    public List<Long> doP_FORList = new ArrayList<>(); //TODO
-//    public List<Long> setFrontierList = new ArrayList<>(); //TODO
-//    public List<Long> createNewDegList = new ArrayList<>(); //TODO
+//                                            public List<Long> createDegList = new ArrayList<>(); //TODO
+                                            public List<Long> createStartBlockList = new ArrayList<>(); //TODO
+//                                            public List<Long> createNextFrontierList = new ArrayList<>(); //TODO
+//                                            public List<Long> copyFinalFrontierList = new ArrayList<>(); //TODO
+                                            public List<Long> doP_FORList = new ArrayList<>(); //TODO
+//                                            public List<Long> setFrontierList = new ArrayList<>(); //TODO
+//                                            public List<Long> createNewDegList = new ArrayList<>(); //TODO
 
-//    long startTime; //TODO
-//    long endTime; //TODO
-//    long createDeg = 0; //TODO
-//    long createStartBlock = 0; //TODO
-//    long createNextFrontier = 0; //TODO
-//    long copyFinalFrontier = 0; //TODO
-//    long doP_FOR = 0; //TODO
-//    long setFrontier = 0; //TODO
-//    long createNewDeg = 0; //TODO
 
-//    long startTime2; // TODO
-//    long endTime2; // TODO
 
     @Override
     public int[] compute(GraphSimulator graph, int start) {
+                                            long startTime; //TODO
+                                            long endTime; //TODO
+//                                            long createDeg = 0; //TODO
+                                            long createStartBlock = 0; //TODO
+//                                            long createNextFrontier = 0; //TODO
+//                                            long copyFinalFrontier = 0; //TODO
+                                            long doP_FOR = 0; //TODO
+//                                            long setFrontier = 0; //TODO
+//                                            long createNewDeg = 0; //TODO
+
+
+
+
         ParallelUtil parallelUtils = new ParallelUtil();
         parallelUtils.setP_FOR_BLOCK_SIZE(P_FOR_BLOCK_SIZE);
         parallelUtils.setP_SCAN_BLOCK_SIZE(P_SCAN_BLOCK_SIZE);
 
-//        startTime = System.nanoTime(); //TODO
+//                                                startTime = System.nanoTime(); //TODO
 //        List<Distance> distances = new ArrayList<>(Collections.nCopies(graph.getSize(), null));
         int[] dist = new int[graph.getSize()];
         AtomicBoolean[] flag = new AtomicBoolean[graph.getSize()];
@@ -70,63 +73,86 @@ public class ParallelBFS implements BFS {
             the null vertex will be indicated by 0
             and vertex will be increased by one
         */
-        int[] frontier = new int[1];
-        int[] deg = new int[1];
+//        int[] frontier = new int[1];
+        UnsafeIntArray frontier = new UnsafeIntArray(1);
+        UnsafeIntArray deg = new UnsafeIntArray(1);
+//        int[] deg = new int[1];
 
         dist[start] = 0;
 //        distances.set(start, new Distance(0, -1));
-        frontier[0] = start + 1;
-        deg[0] = graph.getNeighbours(start).length;
+//        frontier[0] = start + 1;
+//        deg[0] = graph.getNeighbours(start).length;
+        frontier.set(0, start + 1);
+        deg.set(0, graph.getNeighbours(start).length);
         flag[start].set(true);
 
         int distance = 1;
 
-//        endTime = System.nanoTime(); //TODO
-//        System.out.println("Create time: " + TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS)); //TODO
+//                                                endTime = System.nanoTime(); //TODO
+//                                                System.out.println("Create time: " + TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS)); //TODO
 
-        while (frontier.length != 0) {
-//            startTime = System.nanoTime(); //TODO
+        while (frontier.size() != 0) {
+//                                                    startTime = System.nanoTime(); //TODO
 
-            int[] finalFrontier = frontier;
+//            int[] finalFrontier = frontier;
 
-//            endTime = System.nanoTime(); //TODO
-//            copyFinalFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
-//            startTime = System.nanoTime(); //TODO
+//                                                    endTime = System.nanoTime(); //TODO
+//                                                    copyFinalFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//                                                    startTime = System.nanoTime(); //TODO
 
             // put into big p_for
 //            int[] deg = new int[frontier.length];
 //            parallelUtils.parallelFor(frontier.length,
 //                    i -> deg[i] = finalFrontier[i] == -1 ? 0 : graph.getNeighbours(finalFrontier[i]).length);
+//
+//                                                    endTime = System.nanoTime(); //TODO
+//                                                    createDeg += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+                                                    startTime = System.nanoTime(); //TODO
 
-//            endTime = System.nanoTime(); //TODO
-//            createDeg += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
-//            startTime = System.nanoTime(); //TODO
+//            int[] startBlock = parallelUtils.parallelScan(deg);
+            UnsafeIntArray startBlock = parallelUtils.parallelScan(deg);
 
-            int[] startBlock = parallelUtils.parallelScan(deg);
+                                                    endTime = System.nanoTime(); //TODO
+                                                    createStartBlock += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//                                                    startTime = System.nanoTime(); //TODO
 
-//            endTime = System.nanoTime(); //TODO
-//            createStartBlock += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
-//            startTime = System.nanoTime(); //TODO
+            int nextFrontierSize = startBlock.get(startBlock.size() - 1);
 
-            int nextFrontierSize = startBlock[startBlock.length - 1];
-            int[] nextFrontier = new int[nextFrontierSize];
-//            parallelUtils.parallelFor(nextFrontierSize, i -> nextFrontier[i] = -1);
 
-//            endTime = System.nanoTime(); //TODO
-//            createNextFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//            int[] nextFrontier = new int[nextFrontierSize];
+            UnsafeIntArray nextFrontier = new UnsafeIntArray(nextFrontierSize);
+
+//            parallelUtils.parallelFor(nextFrontierSize, i -> nextFrontier.set(i, -1));
+
+//                                                        endTime = System.nanoTime(); //TODO
+//                                                        createNextFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
 
             int finalDistance = distance;
 
+//                                                    startTime = System.nanoTime(); //TODO
 
-//            startTime2 = System.nanoTime(); //TODO
-            int[] newDeg = new int[nextFrontierSize];
-//            endTime2 = System.nanoTime(); //TODO
-//            createNewDeg += TimeUnit.MILLISECONDS.convert((endTime2 - startTime2), TimeUnit.NANOSECONDS); //TODO
+//            int[] newDeg = new int[nextFrontierSize];
+//            UnsafeIntArray newDeg = new UnsafeIntArray(nextFrontierSize);
 
-//            startTime = System.nanoTime(); //TODO
 
-            parallelUtils.parallelFor(frontier.length, currentIndex -> {
-                int current = finalFrontier[currentIndex] - 1;
+//                                                    endTime = System.nanoTime(); //TODO
+//                                                    createNewDeg += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+
+                                                    startTime = System.nanoTime(); //TODO
+            deg.close();
+            deg = new UnsafeIntArray(nextFrontierSize);
+
+
+            UnsafeIntArray finalFrontier = frontier;
+            UnsafeIntArray finalDeg = deg;
+
+            parallelUtils.parallelFor(nextFrontierSize, i -> {
+                finalDeg.set(i, 0);
+                nextFrontier.set(i, 0);
+            });
+
+            parallelUtils.parallelFor(finalFrontier.size(), currentIndex -> {
+                int current = finalFrontier.get(currentIndex) - 1;
                 if (current != -1) {
                     int[] neighbours = graph.getNeighbours(current);
                     for (int i = 0; i < neighbours.length; i++) {
@@ -134,40 +160,52 @@ public class ParallelBFS implements BFS {
                         if (flag[next].compareAndSet(false, true)) {
 //                            distances.set(next, new Distance(finalDistance, current));
                             dist[next] = finalDistance;
-                            nextFrontier[startBlock[currentIndex] + i] = next + 1;
-                            newDeg[startBlock[currentIndex] + i] = graph.getNeighbours(next).length;
+                            nextFrontier.set(startBlock.get(currentIndex) + i, next + 1);
+                            finalDeg.set(startBlock.get(currentIndex) + i, graph.getNeighbours(next).length);
                         }
 //                        else {
-//                            nextFrontier[startBlock[currentIndex] + i] = -1;
+//                            nextFrontier.set(startBlock.get(currentIndex) + i, 0);
+//                            finalDeg.set(startBlock.get(currentIndex) + i, 0);
 //                        }
                     }
                 }
 //                else {
-//                    for (int i = startBlock[currentIndex]; i < startBlock[currentIndex + 1]; i++) {
-//                        nextFrontier[i] = -1;
+//                    for (int i = startBlock.get(currentIndex); i < startBlock.get(currentIndex + 1); i++) {
+//                        nextFrontier.set(i, 0);
+//                        finalDeg.set(i, 0);
 //                    }
 //                }
             });
 
-//            endTime = System.nanoTime(); //TODO
-//            doP_FOR += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
-//            startTime = System.nanoTime(); //TODO
+                                                    endTime = System.nanoTime(); //TODO
+                                                    doP_FOR += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//                                                    startTime = System.nanoTime(); //TODO
+
+            frontier.close();
 
             frontier = nextFrontier;
-            deg = newDeg;
+//            deg = newDeg;
 
-//            endTime = System.nanoTime(); //TODO
-//            setFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+//                                                    endTime = System.nanoTime(); //TODO
+//                                                    setFrontier += TimeUnit.MILLISECONDS.convert((endTime - startTime), TimeUnit.NANOSECONDS); //TODO
+
+//            nextFrontier.close();
+//            newDeg.close();
+            startBlock.close();
 
             distance++;
         }
 
-//        createDegList.add(createDeg); //TODO
-//        createStartBlockList.add(createStartBlock); //TODO
-//        createNextFrontierList.add(createNextFrontier); //TODO
-//        copyFinalFrontierList.add(copyFinalFrontier); //TODO
-//        doP_FORList.add(doP_FOR); //TODO
-//        setFrontierList.add(setFrontier); //TODO
+//                                                createDegList.add(createDeg); //TODO
+                                                createStartBlockList.add(createStartBlock); //TODO
+//                                                createNextFrontierList.add(createNextFrontier); //TODO
+//                                                copyFinalFrontierList.add(copyFinalFrontier); //TODO
+//                                                createNewDegList.add(createNewDeg); //TODO
+                                                doP_FORList.add(doP_FOR); //TODO
+//                                                setFrontierList.add(setFrontier); //TODO
+
+        frontier.close();
+        deg.close();
 
         return dist;
     }
